@@ -1,2 +1,3 @@
-# btc-rpt
-# btc-rpt
+# 🧰 btc-rpt
+
+Just messing with Bitcoin RPC.
