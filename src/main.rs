@@ -1,10 +1,10 @@
-use bitcoincore_rpc::{bitcoin::Amount, Auth, Client, RpcApi};
+use bitcoincore_rpc::{bitcoin::{consensus::Encodable, Amount}, Auth, Client, RpcApi};
 use tokio::{main, task::futures};
 
 #[tokio::main]
 async fn main()  -> Result<(), Error> {
-    let rpc_result = connect_to_bitcoin_core().await;
-    match rpc_result {
+    let rpc_connect_result = connect_to_bitcoin_core().await;
+    match rpc_connect_result {
         Ok(..) => {
             println!("Connected to Bitcoin Core!");
             // println!("{:?}", get_block_fees(&rpc).await.unwrap()); // Print the fees of the last 144 blocks
@@ -13,8 +13,21 @@ async fn main()  -> Result<(), Error> {
             println!("Failed to connect to Bitcoin Core!");     
         }
     }
+    let rpc = rpc_connect_result.unwrap();
+    let client: tokio_postgres::Client = connect_to_database().await.unwrap();
 
-    connect_database().await.unwrap();
+
+    // let block  = rpc.get_block_stats(840_000).unwrap();
+    // let block_stats = BlockStats::from_rpc(block);
+    // block_stats.insert(client).await.unwrap();
+
+    for i in 0..=1000 {
+        let block  = rpc.get_block_stats(i).unwrap();
+        let block_stats = BlockStats::from_rpc(block);
+        block_stats.insert(&client).await.unwrap();
+        // println!("Inserted block {}", i);
+    }
+    
     Ok(())
 }
 
@@ -28,86 +41,144 @@ async fn connect_to_bitcoin_core() -> Result<bitcoincore_rpc::Client, bitcoincor
     )
 }
 
-use tokio_postgres::{NoTls, Error};
-async fn connect_database() -> Result<(), Error> {
+use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls, Socket};
+async fn connect_to_database() -> Result<tokio_postgres::Client, Error> {
     // Connect to the database
     let (client, connection) = tokio_postgres::connect(
         "host=localhost user=rpc password=YOURPASSWORD dbname=bitcoin", NoTls).await?;
 
     println!("Connected to the database!");
 
-    if 1 == 1 {
-        // The connection object performs the actual communication with the database,
-        // so spawn it off to run on its own.
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("connection error: {}", e);
-            }
-        });
-
-        // Prepare the INSERT statement
-        let stmt = client.prepare("
-            INSERT INTO blockstats (
-                height, blockhash, avgfee, avgfeerate, avgtxsize, ins, outs, subsidy, swtotal_size, swtotal_weight, swtxs, time, total_out, total_size, total_weight, totalfee, txs, utxo_increase, utxo_size_inc, utxo_increase_actual, utxo_size_inc_actual, maxfee, maxfeerate, maxtxsize, medianfee, mediantime, mediantxsize, minfee, minfeerate, mintxsize
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30
-            )
-        ").await?;
-
-        // Execute the INSERT statement
-        client.execute(&stmt, &[
-        //  height,      blockhash,                                                          avgfee,   avgfeerate, avgtxsize, ins, outs,     subsidy,       swtotal_size, swtotal_weight, swtxs, time,          total_out,       total_size,  total_weight, totalfee,     txs,      utxo_increase, utxo_size_inc, utxo_increase_actual, utxo_size_inc_actual, maxfee,     maxfeerate, maxtxsize, medianfee, mediantime,     mediantxsize, minfee,   minfeerate, mintxsize      
-            &842209i32, &"000000000000000000023bc3e5419ae1a8d508f531c205e7b6493732d6948c51", &6461i32, &30i32, &337i32, &7791i32, &11689i32, &312500000i32, &1518730i64, &3782590i64, &4569i32, &1714927941i64, &22825097521i64, &1571081i64, &3991994i64,  &30085139i64, &4657i32, &3898i32,      &246275i64,    &476i32,              &41710i64,            &825190i64, &720i32,    &65795i32, &3483i32,  &1714923990i64, &182i32,      &1158i32, &3i32,      &150i32
-        ]).await?;
-    }
-    Ok(())
-}
-
-async fn get_block_fees(rpc: &bitcoincore_rpc::Client) -> Result<Vec<f64>, Box<dyn std::error::Error>> {
-    let mut fees = vec![];
-    let current_height = rpc.get_block_count()?;
-
-    for height in (current_height - 144)..=current_height {
-        let block  = rpc.get_block_stats(height).unwrap();
-        let fee: f64 = block.total_fee.to_btc();
-        fees.push(fee);
-    }
-
-    Ok(fees)
-}
-
-fn get_block_reward(block_height: u64) -> u64 {
-    let initial_reward = 50 * 100_000_000; // 50 BTC in satoshis
-    let halvings = block_height / 210_000;
-    let block_reward = initial_reward >> halvings;
-    block_reward
+    // The connection object performs the actual communication with the database,
+    // so spawn it off to run on its own.
+    tokio::spawn(async move {
+        if let Err(e) = &connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    Ok(client)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_get_block_reward_initial() {
-        let block_reward = get_block_reward(0);
-        assert_eq!(block_reward, 50 * 100_000_000);
+    #[tokio::test]
+    async fn test_connect_to_btc_core() {
+        let rpc = connect_to_bitcoin_core().await;
+        assert!(rpc.is_ok());
     }
 
-    #[test]
-    fn test_get_block_reward_after_first_halving() {
-        let block_reward = get_block_reward(210_000);
-        assert_eq!(block_reward, 25 * 100_000_000);
+    #[tokio::test]
+    async fn test_connect_to_database() {
+        let db = connect_to_database().await;
+        assert!(db.is_ok());
     }
 
-    #[test]
-    fn test_get_block_reward_after_second_halving() {
-        let block_reward = get_block_reward(420_000);
-        assert_eq!(block_reward, 1_250_000_000);
+    #[tokio::test]
+    async fn test_get_block_stats() {
+        let rpc = connect_to_bitcoin_core().await;
+        assert!(rpc.is_ok());
+        let rpc = rpc.unwrap();
+        let block = rpc.get_block_stats(842209).unwrap();
+        assert_eq!(block.height, 842209);
+        println!("{:?}", block)
+    }
+    
+}
+
+use bitcoincore_rpc::json::GetBlockStatsResult;
+
+pub struct BlockStats {
+    pub height: u64,
+    pub blockhash: String,
+    pub avgfee: u64,
+    pub avgfeerate: u64,
+    pub avgtxsize: u32,
+    pub ins: u64,
+    pub outs: u64,
+    pub subsidy: u64,
+    pub swtotal_size: u64,
+    pub swtotal_weight: u64,
+    pub swtxs: u64,
+    pub time: u64,
+    pub total_out: u64,
+    pub total_size: u64,
+    pub total_weight: u64,
+    pub totalfee: u64,
+    pub txs: u64,
+    pub utxo_increase: u64,
+    pub utxo_size_inc: u64,
+    // pub utxo_increase_actual: u64,
+    // pub utxo_size_inc_actual: u64,
+    pub maxfee: u64,
+    pub maxfeerate: u64,
+    pub maxtxsize: u64,
+    pub medianfee: u64,
+    pub mediantime: u64,
+    pub mediantxsize: u64,
+    pub minfee: u64,
+    pub minfeerate: u64,
+    pub mintxsize: u64,
+}
+
+impl BlockStats {
+    pub fn from_rpc(stats: GetBlockStatsResult) -> Self {
+        Self {
+            avgfee: stats.avg_fee.to_sat(),
+            avgfeerate: stats.avg_fee_rate.to_sat(),
+            avgtxsize: stats.avg_tx_size,
+            blockhash: stats.block_hash.to_string(),
+            height: stats.height,
+            ins: stats.ins as u64,
+            maxfee: stats.max_fee.to_sat(),
+            maxfeerate: stats.max_fee_rate.to_sat() as u64,
+            maxtxsize: stats.max_tx_size as u64,
+            medianfee: stats.median_fee.to_sat(),
+            mediantime: stats.median_time,
+            mediantxsize: stats.median_tx_size as u64,
+            minfee: stats.min_fee.to_sat(),
+            minfeerate: stats.min_fee_rate.to_sat() as u64,
+            mintxsize: stats.min_tx_size as u64,
+            outs: stats.outs as u64,
+            subsidy: stats.subsidy.to_sat(),
+            swtotal_size: stats.sw_total_size as u64,
+            swtotal_weight: stats.sw_total_weight as u64,
+            swtxs: stats.sw_txs as u64,
+            time: stats.time,
+            total_out: stats.total_out.to_sat(),
+            total_size: stats.total_size as u64,
+            total_weight: stats.total_weight as u64,
+            totalfee: stats.total_fee.to_sat(),
+            txs: stats.txs as u64,
+            // utxo_increase_actual: stats.utxo_increase_actual,
+            utxo_increase: stats.utxo_increase as u64,
+            // utxo_size_inc_actual: stats.utxo_size_inc_actual,
+            utxo_size_inc: stats.utxo_size_inc as u64,
+        }
     }
 
-    #[test]
-    fn test_get_block_reward_no_more_halvings() {
-        let block_reward = get_block_reward(210_000 * 33); // After 33 halvings, reward should be 0
-        assert_eq!(block_reward, 0);
+    pub async fn insert(&self, client: &tokio_postgres::Client) -> Result<(), Error> {
+        client.execute(
+            "INSERT INTO public.blockstats (
+                height, blockhash, avgfee, avgfeerate, avgtxsize, ins, outs, subsidy, swtotal_size, 
+                swtotal_weight, swtxs, time, total_out, total_size, total_weight, totalfee, txs, 
+                utxo_increase, utxo_size_inc, maxfee, 
+                maxfeerate, maxtxsize, medianfee, mediantime, mediantxsize, minfee, minfeerate, mintxsize
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 
+                $19, $20, $21, $22, $23, $24, $25, $26, $27, $28 -- , $29, $30
+            )",
+            &[
+                &(self.height as i64), &self.blockhash.to_string(), &(self.avgfee as i64), &(self.avgfeerate as i64), &(self.avgtxsize as i32), &(self.ins as i64), 
+                &(self.outs as i64), &(self.subsidy as i64), &(self.swtotal_size as i64), &(self.swtotal_weight as i64), &(self.swtxs as i64), &(self.time as i64), 
+                &(self.total_out as i64), &(self.total_size as i64), &(self.total_weight as i64), &(self.totalfee as i64), &(self.txs as i64), 
+                &(self.utxo_increase as i64), &(self.utxo_size_inc as i64), /*  &self.utxo_increase_actual, &self.utxo_size_inc_actual, */
+                &(self.maxfee as i64), &(self.maxfeerate as i64), &(self.maxtxsize as i64), &(self.medianfee as i64), &(self.mediantime as i64), 
+                &(self.mediantxsize as i64), &(self.minfee as i64), &(self.minfeerate as i64), &(self.mintxsize as i64)
+            ]
+        ).await?;
+
+        Ok(())
     }
 }
