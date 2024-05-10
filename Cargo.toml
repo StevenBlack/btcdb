@@ -9,6 +9,7 @@ edition = "2021"
 bitcoin = "0.32.0"
 bitcoincore-rpc = "0.18.0"
 bitcoincore-rpc-json = "0.18.0"
+clap = { version = "4.5.4", features = ["derive", "cargo"] }
 futures = "0.3.30"
 rust_decimal = "1.35.0"
 tokio = { version = "1", features = ["full"] }
