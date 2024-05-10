@@ -5,6 +5,9 @@ use tokio::{main, task::futures};
 
 #[tokio::main]
 async fn main()  -> Result<(), Error> {
+    let blockstart = 0;
+    let blockend = 425_000;
+
     let rpc_connect_result = connect_to_bitcoin_core().await;
     match rpc_connect_result {
         Ok(..) => {
@@ -23,7 +26,7 @@ async fn main()  -> Result<(), Error> {
     // let block_stats = BlockStats::from_rpc(block);
     // block_stats.insert(client).await.unwrap();
 
-    for i in 0..=10 {
+    for i in blockstart..=blockend {
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
