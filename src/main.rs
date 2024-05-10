@@ -1,4 +1,6 @@
 use bitcoincore_rpc::{bitcoin::{consensus::Encodable, Amount}, Auth, Client, RpcApi};
+use bitcoincore_rpc::json::GetBlockStatsResult;
+use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
 use tokio::{main, task::futures};
 
 #[tokio::main]
@@ -21,7 +23,7 @@ async fn main()  -> Result<(), Error> {
     // let block_stats = BlockStats::from_rpc(block);
     // block_stats.insert(client).await.unwrap();
 
-    for i in 0..=1000 {
+    for i in 0..=10 {
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
@@ -41,7 +43,6 @@ async fn connect_to_bitcoin_core() -> Result<bitcoincore_rpc::Client, bitcoincor
     )
 }
 
-use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls, Socket};
 async fn connect_to_database() -> Result<tokio_postgres::Client, Error> {
     // Connect to the database
     let (client, connection) = tokio_postgres::connect(
@@ -87,7 +88,7 @@ mod tests {
     
 }
 
-use bitcoincore_rpc::json::GetBlockStatsResult;
+
 
 pub struct BlockStats {
     pub height: u64,
@@ -97,7 +98,7 @@ pub struct BlockStats {
     pub avgtxsize: u32,
     pub ins: u64,
     pub outs: u64,
-    pub subsidy: u64,
+    pub subsidy: f64,
     pub swtotal_size: u64,
     pub swtotal_weight: u64,
     pub swtxs: u64,
@@ -105,12 +106,10 @@ pub struct BlockStats {
     pub total_out: u64,
     pub total_size: u64,
     pub total_weight: u64,
-    pub totalfee: u64,
+    pub totalfee: f64,
     pub txs: u64,
     pub utxo_increase: u64,
     pub utxo_size_inc: u64,
-    // pub utxo_increase_actual: u64,
-    // pub utxo_size_inc_actual: u64,
     pub maxfee: u64,
     pub maxfeerate: u64,
     pub maxtxsize: u64,
@@ -124,6 +123,7 @@ pub struct BlockStats {
 
 impl BlockStats {
     pub fn from_rpc(stats: GetBlockStatsResult) -> Self {
+
         Self {
             avgfee: stats.avg_fee.to_sat(),
             avgfeerate: stats.avg_fee_rate.to_sat(),
@@ -141,7 +141,7 @@ impl BlockStats {
             minfeerate: stats.min_fee_rate.to_sat() as u64,
             mintxsize: stats.min_tx_size as u64,
             outs: stats.outs as u64,
-            subsidy: stats.subsidy.to_sat(),
+            subsidy: stats.subsidy.to_btc() as f64,
             swtotal_size: stats.sw_total_size as u64,
             swtotal_weight: stats.sw_total_weight as u64,
             swtxs: stats.sw_txs as u64,
@@ -149,7 +149,7 @@ impl BlockStats {
             total_out: stats.total_out.to_sat(),
             total_size: stats.total_size as u64,
             total_weight: stats.total_weight as u64,
-            totalfee: stats.total_fee.to_sat(),
+            totalfee: stats.total_fee.to_btc() as f64,
             txs: stats.txs as u64,
             // utxo_increase_actual: stats.utxo_increase_actual,
             utxo_increase: stats.utxo_increase as u64,
@@ -161,21 +161,77 @@ impl BlockStats {
     pub async fn insert(&self, client: &tokio_postgres::Client) -> Result<(), Error> {
         client.execute(
             "INSERT INTO public.blockstats (
-                height, blockhash, avgfee, avgfeerate, avgtxsize, ins, outs, subsidy, swtotal_size, 
-                swtotal_weight, swtxs, time, total_out, total_size, total_weight, totalfee, txs, 
-                utxo_increase, utxo_size_inc, maxfee, 
-                maxfeerate, maxtxsize, medianfee, mediantime, mediantxsize, minfee, minfeerate, mintxsize
+                height
+                , blockhash
+                , avgfee
+                , avgfeerate
+                , avgtxsize
+
+                , ins
+                , outs
+                , subsidy
+                , swtotal_size
+                , swtotal_weight
+                
+                , swtxs
+                , time
+                , total_out
+                , total_size
+                , total_weight
+                
+                , totalfee
+                , txs
+                , utxo_increase
+                , utxo_size_inc
+                , maxfee
+                
+                , maxfeerate
+                , maxtxsize
+                , medianfee
+                , mediantime
+                , mediantxsize
+                
+                , minfee
+                , minfeerate
+                , mintxsize
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 
-                $19, $20, $21, $22, $23, $24, $25, $26, $27, $28 -- , $29, $30
+                $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
             )",
             &[
-                &(self.height as i64), &self.blockhash.to_string(), &(self.avgfee as i64), &(self.avgfeerate as i64), &(self.avgtxsize as i32), &(self.ins as i64), 
-                &(self.outs as i64), &(self.subsidy as i64), &(self.swtotal_size as i64), &(self.swtotal_weight as i64), &(self.swtxs as i64), &(self.time as i64), 
-                &(self.total_out as i64), &(self.total_size as i64), &(self.total_weight as i64), &(self.totalfee as i64), &(self.txs as i64), 
-                &(self.utxo_increase as i64), &(self.utxo_size_inc as i64), /*  &self.utxo_increase_actual, &self.utxo_size_inc_actual, */
-                &(self.maxfee as i64), &(self.maxfeerate as i64), &(self.maxtxsize as i64), &(self.medianfee as i64), &(self.mediantime as i64), 
-                &(self.mediantxsize as i64), &(self.minfee as i64), &(self.minfeerate as i64), &(self.mintxsize as i64)
+                &(self.height as i64)
+                , &self.blockhash.to_string()
+                , &(self.avgfee as i64)
+                , &(self.avgfeerate as i64)
+                , &(self.avgtxsize as i64)
+                
+                , &(self.ins as i64)
+                , &(self.outs as i64)
+                , &(self.subsidy as f64)
+                , &(self.swtotal_size as i64)
+                , &(self.swtotal_weight as i64)
+                
+                , &(self.swtxs as i64)
+                , &(self.time as i64)
+                , &(self.total_out as i64)
+                , &(self.total_size as i64)
+                , &(self.total_weight as i64)
+                
+                , &(self.totalfee as f64)
+                , &(self.txs as i64)
+                , &(self.utxo_increase as i64)
+                , &(self.utxo_size_inc as i64)
+                , &(self.maxfee as i64)
+                
+                , &(self.maxfeerate as i64)
+                , &(self.maxtxsize as i64)
+                , &(self.medianfee as i64)
+                , &(self.mediantime as i64)
+                , &(self.mediantxsize as i64)
+                
+                , &(self.minfee as i64)
+                , &(self.minfeerate as i64)
+                , &(self.mintxsize as i64)
             ]
         ).await?;
 

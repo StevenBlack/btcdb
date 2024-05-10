@@ -10,5 +10,6 @@ bitcoin = "0.32.0"
 bitcoincore-rpc = "0.18.0"
 bitcoincore-rpc-json = "0.18.0"
 futures = "0.3.30"
+rust_decimal = "1.35.0"
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = "0.7.10"
