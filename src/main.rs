@@ -1,38 +1,64 @@
-use bitcoincore_rpc::{bitcoin::{consensus::Encodable, Amount}, Auth, Client, RpcApi};
+use bitcoincore_rpc::{Auth, Client, RpcApi};
 use bitcoincore_rpc::json::GetBlockStatsResult;
 use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
 use tokio::{main, task::futures};
 
+mod modes;
+
 #[tokio::main]
 async fn main()  -> Result<(), Error> {
-    let blockstart = 0;
-    let blockend = 425_000;
 
-    let rpc_connect_result = connect_to_bitcoin_core().await;
-    match rpc_connect_result {
-        Ok(..) => {
-            println!("Connected to Bitcoin Core!");
-            // println!("{:?}", get_block_fees(&rpc).await.unwrap()); // Print the fees of the last 144 blocks
-        },
-        _ => {
-            println!("Failed to connect to Bitcoin Core!");     
-        }
-    }
-    let rpc = rpc_connect_result.unwrap();
-    let client: tokio_postgres::Client = connect_to_database().await.unwrap();
+    // let mut db = modes::DataStore::default();
+    // db.connect().await.unwrap();
+    // dbg!(db);
+
+
+
+    let mode = modes::Mode::new("bitcoin".to_string()).await;
+    dbg!(mode);
+
+    let mode = modes::Mode{rpc: None, store: None};
+    dbg!(mode);
+
+
+    // let db = modes::DataStore::new().await;
+    // dbg!(db);
+
+
+
+    // let rpc_connect_result = connect_to_bitcoin_core().await;
+    // match rpc_connect_result {
+    //     Ok(..) => {
+    //         println!("Connected to Bitcoin Core!");
+    //         // println!("{:?}", get_block_fees(&rpc).await.unwrap()); // Print the fees of the last 144 blocks
+    //     },
+    //     _ => {
+    //         println!("Failed to connect to Bitcoin Core!");     
+    //     }
+    // }
+    // let rpc = rpc_connect_result.unwrap();
+    // let client: tokio_postgres::Client = connect_to_database().await.unwrap();
+
+
+
 
 
     // let block  = rpc.get_block_stats(840_000).unwrap();
     // let block_stats = BlockStats::from_rpc(block);
     // block_stats.insert(client).await.unwrap();
 
+
+    
+    Ok(())
+}
+
+async fn update_blockstats_table(rpc: &Client, client: &tokio_postgres::Client, blockstart: u64, blockend: u64) -> Result<(), Error> {
     for i in blockstart..=blockend {
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
         // println!("Inserted block {}", i);
-    }
-    
+    }    
     Ok(())
 }
 
@@ -67,18 +93,21 @@ async fn connect_to_database() -> Result<tokio_postgres::Client, Error> {
 mod tests {
     use super::*;
 
+    // test connecting to the bitcoin core
     #[tokio::test]
     async fn test_connect_to_btc_core() {
         let rpc = connect_to_bitcoin_core().await;
         assert!(rpc.is_ok());
     }
 
+    // test connecting to the database
     #[tokio::test]
     async fn test_connect_to_database() {
         let db = connect_to_database().await;
         assert!(db.is_ok());
     }
 
+    // fetch a block.
     #[tokio::test]
     async fn test_get_block_stats() {
         let rpc = connect_to_bitcoin_core().await;
@@ -87,6 +116,16 @@ mod tests {
         let block = rpc.get_block_stats(842209).unwrap();
         assert_eq!(block.height, 842209);
         println!("{:?}", block)
+    }
+
+    // fetch an out of bounds block
+    #[tokio::test]
+    async fn test_get_block_stats_out_of_bounds() {
+        let rpc = connect_to_bitcoin_core().await;
+        assert!(rpc.is_ok());
+        let rpc = rpc.unwrap();
+        let block = rpc.get_block_stats(999_999_999);
+        assert!(block.is_err());
     }
     
 }
