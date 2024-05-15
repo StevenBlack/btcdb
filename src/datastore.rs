@@ -1,5 +1,8 @@
-use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
+// use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
+use tokio_postgres::{Error, NoTls};
 use bitcoincore_rpc::json::GetBlockStatsResult;
+
+use crate::modes::Mode;
 
 #[derive(Debug)]
 pub struct DataStore {
@@ -25,17 +28,15 @@ impl Default for DataStore {
 }
 
 impl DataStore {
-    pub async fn new() -> Self {
-        let mut ds = DataStore {
+    pub fn new() -> Self {
+        DataStore {
             client: None,
             dbname: "bitcoin".to_string(),
             schema: "public".to_string(),
             host: "localhost".to_string(),
             username: "rpc".to_string(),
             password: "YOURPASSWORD".to_string(),
-        };
-        ds.connect().await.unwrap();
-        ds
+        }
     }
 
     pub async fn connect(&mut self) -> Result<(), tokio_postgres::Error> {
@@ -49,9 +50,13 @@ impl DataStore {
             )
             , NoTls)
             .await?;
-        self.createschemaenvironment().await?;
+        // self.createschemaenvironment().await?;
         self.client = Some(client);
         Ok(())
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.client.is_some()
     }
 
     pub async fn createschemaenvironment(&self) -> Result<(), tokio_postgres::Error> {
