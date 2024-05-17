@@ -1,4 +1,5 @@
-use bitcoin::io::Error;
+#![allow(dead_code)]
+// use bitcoin::io::Error;
 use bitcoincore_rpc::{Auth, Client};
 
 // #[derive(Debug)]

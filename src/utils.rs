@@ -1,5 +1,6 @@
+#![allow(dead_code)]
 use bitcoincore_rpc::{Auth, Client, RpcApi};
-use bitcoincore_rpc_json::{GetBlockResult};
+// use bitcoincore_rpc_json::{GetBlockResult};
 use tokio_postgres::{Error, NoTls};
 use crate::{datastore::BlockStats, modes::Mode};
 

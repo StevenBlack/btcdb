@@ -1,8 +1,6 @@
-// use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
+#![allow(dead_code)]
 use tokio_postgres::{Error, NoTls};
 use bitcoincore_rpc::json::GetBlockStatsResult;
-
-use crate::modes::Mode;
 
 #[derive(Debug)]
 pub struct DataStoreSpec {

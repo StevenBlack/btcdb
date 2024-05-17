@@ -1,7 +1,6 @@
-use bitcoincore_rpc::{Auth, Client, RpcApi};
-use tokio_postgres::{Error, NoTls};
+// use bitcoincore_rpc::{Auth, Client, RpcApi};
+use tokio_postgres::Error;
 
-use datastore::BlockStats;
 use utils::*;
 
 mod modes;
