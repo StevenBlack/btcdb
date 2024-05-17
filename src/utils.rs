@@ -4,19 +4,12 @@ use tokio_postgres::{Error, NoTls};
 use crate::{datastore::BlockStats, modes::Mode};
 
 
-pub async fn get_store_height(mut mode: Mode) -> Result<u32, Error> {
-    if !mode.store.is_connected() {
-        mode.store.connect().await?;
-    }
-    let storeclient = mode.getstoreclient();
-
-    let row = storeclient.query(
-        // "SELECT max(height) FROM public.blockstats;",
-        "SELECT 4;",
+pub async fn get_store_height(moderef: &Mode) -> Result<i64, Error> {
+    let row = moderef.store.client.query(
+        "SELECT max(height) FROM public.blockstats;",
         &[]
     ).await.expect("Error getting max height");
-
-    Ok(0)
+    Ok(row[0].get::<_, i64>(0))
 }
 
 
@@ -93,7 +86,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_store_height() {
         let mode = modes::Mode::new().await;
-        let height = get_store_height(mode).await.unwrap();
+        let height = get_store_height(&mode).await.unwrap();
         assert!(height > 0);
     }
 

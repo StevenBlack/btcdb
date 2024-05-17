@@ -13,9 +13,8 @@ mod utils;
 async fn main()  -> Result<(), Error> {
 
     let mode = modes::Mode::new().await;
-    let height = get_store_height(mode).await.unwrap();
+    let height = get_store_height(&mode).await.unwrap();
     dbg!(height);
-    
     
     Ok(())
 }

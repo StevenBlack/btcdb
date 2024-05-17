@@ -5,7 +5,7 @@ use bitcoincore_rpc::{Auth, Client, RpcApi};
 use bitcoincore_rpc::json::GetBlockStatsResult;
 use tokio_postgres::{tls::NoTlsStream, Connection, Error, NoTls};
 
-use crate::datastore::DataStore;
+use crate::datastore::{DataStore, DataStoreSpec};
 use crate::rpcclient::{self, RpcClient};
 
 #[derive(Debug)]
@@ -14,19 +14,9 @@ pub struct Mode {
     pub (crate) store: DataStore,
 }
 
-impl Default for Mode {
-    fn default() -> Self {
-        Mode {
-            rpc: RpcClient::default(),
-            store: DataStore::new(),
-        }
-    }
-}
-
 impl Mode {
     pub async fn new() -> Self {
-        let mut db_client = DataStore::default();
-        db_client.connect().await.unwrap();
+        let mut db_client = DataStore::new(DataStoreSpec::default()).await;
         Mode {
             rpc: RpcClient::default(),
             store: db_client,
@@ -37,7 +27,20 @@ impl Mode {
         self.rpc.rpc
     }
     pub fn getstoreclient(self) -> tokio_postgres::Client {
-        self.store.client.unwrap()
+        self.store.client
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_mode_new() {
+        let mode = Mode::new().await;
+        let blokchainok = mode.rpc.rpc.get_blockchain_info().is_ok();
+        assert!(mode.rpc.rpc.get_blockchain_info().is_ok());
+        assert!(mode.store.client.query("SELECT 1", &[]).await.is_ok());
     }
 }
 

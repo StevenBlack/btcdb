@@ -5,8 +5,7 @@ use bitcoincore_rpc::json::GetBlockStatsResult;
 use crate::modes::Mode;
 
 #[derive(Debug)]
-pub struct DataStore {
-    pub(crate) client: Option<tokio_postgres::Client>,
+pub struct DataStoreSpec {
     pub(crate) host: String,
     pub(crate) dbname: String,
     pub(crate) schema: String,
@@ -14,10 +13,9 @@ pub struct DataStore {
     pub(crate) password: String,
 }
 
-impl Default for DataStore {
+impl Default for DataStoreSpec {
     fn default() -> Self {
-        DataStore {
-            client: None,
+        DataStoreSpec {
             dbname: "bitcoin".to_string(),
             schema: "public".to_string(),
             host: "localhost".to_string(),
@@ -27,94 +25,35 @@ impl Default for DataStore {
     }
 }
 
-impl DataStore {
-    pub fn new() -> Self {
-        DataStore {
-            client: None,
-            dbname: "bitcoin".to_string(),
-            schema: "public".to_string(),
-            host: "localhost".to_string(),
-            username: "rpc".to_string(),
-            password: "YOURPASSWORD".to_string(),
-        }
-    }
+#[derive(Debug)]
+pub struct DataStore {
+    pub(crate) client: tokio_postgres::Client,
+}
 
-    pub async fn connect(&mut self) -> Result<(), tokio_postgres::Error> {
-        let (client, _connection) = tokio_postgres::connect(
+impl DataStore {
+    pub async fn new(spec: DataStoreSpec) -> Self {
+        let (client, connection) = tokio_postgres::connect(
             &format!(
                 "host={} user={} password={} dbname={}", 
-                self.host, 
-                self.username, 
-                self.password, 
-                self.dbname
+                spec.host, 
+                spec.username, 
+                spec.password, 
+                spec.dbname
             )
             , NoTls)
-            .await?;
-        // self.createschemaenvironment().await?;
-        self.client = Some(client);
-        Ok(())
+            .await.unwrap();
+            // The connection object performs the actual communication with the database,
+            // so spawn it off to run on its own.
+            tokio::spawn(async move {
+                if let Err(e) = connection.await {
+                    eprintln!("connection error: {}", e);
+                }
+            });
+
+        DataStore {
+            client
+        }
     }
-
-    pub fn is_connected(&self) -> bool {
-        self.client.is_some()
-    }
-
-    pub async fn createschemaenvironment(&self) -> Result<(), tokio_postgres::Error> {
-        let client = self.client.as_ref().unwrap();
-        client.batch_execute(self.initsql().as_str()).await?;
-        Ok(())
-    }
-
-    /// ensure the requisite SQL schema and tables are in place
-    fn initsql(&self) -> String {
-        format!(
-        "create schema if not exists {};
-        set search_path to {}, public;
-        create table if not exists public.blockstats
-        (
-            height         bigint         not null,
-            blockhash      text           not null,
-            avgfee         bigint         not null,
-            avgfeerate     bigint         not null,
-            avgtxsize      bigint         not null,
-            ins            bigint         not null,
-            outs           bigint         not null,
-            subsidy        float          not null,
-            swtotal_size   bigint         not null,
-            swtotal_weight bigint         not null,
-            swtxs          bigint         not null,
-            time           bigint         not null,
-            total_out      bigint         not null,
-            total_size     bigint         not null,
-            total_weight   bigint         not null,
-            totalfee       float          not null,
-            txs            bigint         not null,
-            utxo_increase  bigint         not null,
-            utxo_size_inc  bigint         not null,
-            maxfee         bigint         not null,
-            maxfeerate     bigint         not null,
-            maxtxsize      bigint         not null,
-            medianfee      bigint         not null,
-            mediantime     bigint         not null,
-            mediantxsize   bigint         not null,
-            minfee         bigint         not null,
-            minfeerate     bigint         not null,
-            mintxsize      bigint         not null
-        );
-        
-        alter table public.blockstats
-            owner to {};
-        
-        grant delete, insert, select on public.blockstats to {};
-        "
-        , &self.schema
-        , &self.schema
-        , "steve"
-        , "rpc"
-    )
-    }
-
-
 }
 
 pub struct BlockStats {
