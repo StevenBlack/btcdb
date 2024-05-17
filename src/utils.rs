@@ -3,22 +3,22 @@ use bitcoincore_rpc_json::{GetBlockResult};
 use tokio_postgres::{Error, NoTls};
 use crate::{datastore::BlockStats, modes::Mode};
 
-
-pub async fn get_store_height(moderef: &Mode) -> Result<i64, Error> {
+/// returns the block height of the store
+pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
     let row = moderef.store.client.query(
         "SELECT max(height) FROM public.blockstats;",
         &[]
     ).await.expect("Error getting max height");
-    Ok(row[0].get::<_, i64>(0))
+    Ok(row[0].get::<_, i64>(0).try_into().unwrap())
 }
 
-
-pub async fn get_block_fees(mode: Mode) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
-    let rpc: bitcoincore_rpc::Client = mode.getrpc();
+/// a demo utility function to get the block fees for the last `numblocks` blocks
+pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
+    let rpc: &bitcoincore_rpc::Client = &moderef.rpc.rpc;
     let mut fees: Vec<u64> = Vec::new();
     let current_height = rpc.get_block_count().unwrap();
 
-    for height in (current_height - 10)..=current_height {
+    for height in (current_height - numblocks)..=current_height {
         let block_hash = rpc.get_block_hash(height).unwrap();
         let block = rpc.get_block(&block_hash).unwrap();
 
@@ -32,6 +32,7 @@ pub async fn get_block_fees(mode: Mode) -> Result<Vec<u64>, Box<dyn std::error::
     Ok(fees)
 }
 
+/// get the block reward for a given block height
 pub fn get_block_reward(block_height: u64) -> u64 {
     let initial_reward = 50 * 100_000_000; // 50 BTC in satoshis
     let halvings = block_height / 210_000;
@@ -39,9 +40,31 @@ pub fn get_block_reward(block_height: u64) -> u64 {
     block_reward
 }
 
+/// update the blockstats table in the database, all the way to the current block
+pub async fn update_blockstats_table(moderef: &Mode) -> Result<(), Error> {
+    let rpc = &moderef.rpc.rpc;
+    let client = &moderef.store.client;
+    let current_height = rpc.get_block_count().unwrap();
+    let store_height = get_store_height(&moderef).await.unwrap();
+    for i in (store_height + 1)..=current_height {
 
-async fn update_blockstats_table(rpc: &Client, client: &tokio_postgres::Client, blockstart: u64, blockend: u64) -> Result<(), Error> {
-    for i in blockstart..=blockend {
+        let block  = rpc.get_block_stats(i).unwrap();
+        let block_stats = BlockStats::from_rpc(block);
+        block_stats.insert(&client).await.unwrap();
+        // println!("Inserted block {}", i);
+    }    
+    Ok(())
+}
+
+/// update the blockstats table in the database, all the way to the current block
+pub async fn raise_blockstats_table(moderef: &Mode, numblocks: u64) -> Result<(), Error> {
+    use std::cmp::min;
+    let rpc = &moderef.rpc.rpc;
+    let client = &moderef.store.client;
+    let current_height = rpc.get_block_count().unwrap();
+    let store_height = get_store_height(&moderef).await.unwrap();
+    let increment = min(numblocks, current_height - store_height);
+    for i in (store_height + 1)..= (store_height + increment) {
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
