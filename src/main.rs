@@ -1,4 +1,5 @@
 // use bitcoincore_rpc::{Auth, Client, RpcApi};
+use clap::Parser;
 use tokio_postgres::Error;
 
 use utils::*;
@@ -8,23 +9,69 @@ mod datastore;
 mod rpcclient;
 mod utils;
 
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    /// raise the datastore height by an arbitrary nummber of blocks.
+    #[clap(short, long)]
+    raise: Option<u64>,
+
+    /// display the status of the datastore and the local blockchain.
+    #[clap(short, long)]
+    status: bool,
+
+    /// update the local datastore with the latest block stats.
+    #[clap(short, long)]
+    update: bool,
+
+    /// verbose output from commands.
+    #[clap(short, long)]
+    verbose: bool,
+}
+
 #[tokio::main]
 async fn main()  -> Result<(), Error> {
+    
+    // parce the command line arguments
+    let cli = Cli::parse();
 
+    // our mode of operation
     let mode = modes::Mode::new().await;
 
-    let height = get_store_height(&mode).await.unwrap();
-    dbg!(height);
+    if cli.status {
+        let blockchainheight = get_blockchain_height(&mode).await.unwrap();
+        println!("blockchain height: {}", blockchainheight);
+        let storeheight = get_store_height(&mode).await.unwrap();
+        println!("store height: {}", storeheight);
+        println!("store is {} blocks behind the local blockchain", blockchainheight - storeheight);
+        return Ok(());
+    }
 
-    raise_blockstats_table(&mode, 50000).await.unwrap();
+    if cli.raise.is_some() {
+        let raise = cli.raise.unwrap();
+        raise_blockstats_table(&mode, raise).await.unwrap();
+        return Ok(());
+    }
 
-    let height = get_store_height(&mode).await.unwrap();
-    dbg!(height);
-    
-    // let fees = get_block_fees(&mode, 2).await.unwrap();
-    // dbg!(fees);
+    if cli.update {
+        update_blockstats_table(&mode).await.unwrap();
+        return Ok(());
+    }
+
+    // if we get here, we have no command line arguments
+    // so we just print the status
+    status().await;
     
     Ok(())
+}
+
+async fn status() {
+    let mode = modes::Mode::new().await;
+    let blockchainheight = get_blockchain_height(&mode).await.unwrap();
+    println!("blockchain height: {}", blockchainheight);
+    let storeheight = get_store_height(&mode).await.unwrap();
+    println!("store height: {}", storeheight);
+    println!("store is {} blocks behind the local blockchain", blockchainheight - storeheight);
 }
 
 

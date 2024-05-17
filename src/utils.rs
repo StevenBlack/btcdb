@@ -13,6 +13,12 @@ pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
     Ok(row[0].get::<_, i64>(0).try_into().unwrap())
 }
 
+/// returns the block height of the blockchain
+pub async fn get_blockchain_height(moderef: &Mode) -> Result<u64, Box<dyn std::error::Error>> {
+    let rpc: &bitcoincore_rpc::Client = &moderef.rpc.rpc;
+    Ok(rpc.get_block_count().unwrap())
+}
+
 /// a demo utility function to get the block fees for the last `numblocks` blocks
 pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
     let rpc: &bitcoincore_rpc::Client = &moderef.rpc.rpc;
