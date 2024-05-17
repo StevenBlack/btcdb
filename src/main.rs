@@ -17,7 +17,7 @@ async fn main()  -> Result<(), Error> {
     let height = get_store_height(&mode).await.unwrap();
     dbg!(height);
 
-    raise_blockstats_table(&mode, 200000).await.unwrap();
+    raise_blockstats_table(&mode, 50000).await.unwrap();
 
     let height = get_store_height(&mode).await.unwrap();
     dbg!(height);
