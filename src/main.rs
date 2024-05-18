@@ -1,4 +1,10 @@
-// use bitcoincore_rpc::{Auth, Client, RpcApi};
+// Copyright 2024 Steven Black <s@sbc.io>,
+//
+// Licensed under the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>.
+// This file may not be copied, modified, or distributed
+// except according to those terms.
+//
 use clap::Parser;
 use tokio_postgres::Error;
 
@@ -9,6 +15,7 @@ mod datastore;
 mod rpcclient;
 mod utils;
 
+/// Defines our command line flags and options
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
@@ -24,14 +31,14 @@ struct Cli {
     #[clap(short, long)]
     update: bool,
 
-    /// verbose output from commands.
-    #[clap(short, long)]
-    verbose: bool,
+    // /// verbose output from commands.
+    // #[clap(short, long)]
+    // verbose: bool,
 }
 
 #[tokio::main]
 async fn main()  -> Result<(), Error> {
-    
+
     // parce the command line arguments
     let cli = Cli::parse();
 
@@ -39,11 +46,7 @@ async fn main()  -> Result<(), Error> {
     let mode = modes::Mode::new().await;
 
     if cli.status {
-        let blockchainheight = get_blockchain_height(&mode).await.unwrap();
-        println!("blockchain height: {}", blockchainheight);
-        let storeheight = get_store_height(&mode).await.unwrap();
-        println!("store height: {}", storeheight);
-        println!("store is {} blocks behind the local blockchain", blockchainheight - storeheight);
+        status().await;
         return Ok(());
     }
 
@@ -61,17 +64,23 @@ async fn main()  -> Result<(), Error> {
     // if we get here, we have no command line arguments
     // so we just print the status
     status().await;
-    
+
     Ok(())
 }
 
+/// Print the status of the local blockchain and our local data store.
 async fn status() {
     let mode = modes::Mode::new().await;
     let blockchainheight = get_blockchain_height(&mode).await.unwrap();
     println!("blockchain height: {}", blockchainheight);
     let storeheight = get_store_height(&mode).await.unwrap();
     println!("store height: {}", storeheight);
-    println!("store is {} blocks behind the local blockchain", blockchainheight - storeheight);
+    let delta = blockchainheight - storeheight;
+    if delta > 0 {
+        println!("store is {} blocks behind the local blockchain", blockchainheight - storeheight);
+        return;
+    }
+    println!("store and the local blockchain have equal height");
 }
 
 

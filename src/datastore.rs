@@ -2,6 +2,7 @@
 use tokio_postgres::{Error, NoTls};
 use bitcoincore_rpc::json::GetBlockStatsResult;
 
+/// The fields required to address the local SQL data store.
 #[derive(Debug)]
 pub struct DataStoreSpec {
     pub(crate) host: String,
@@ -32,10 +33,10 @@ impl DataStore {
     pub async fn new(spec: DataStoreSpec) -> Self {
         let (client, connection) = tokio_postgres::connect(
             &format!(
-                "host={} user={} password={} dbname={}", 
-                spec.host, 
-                spec.username, 
-                spec.password, 
+                "host={} user={} password={} dbname={}",
+                spec.host,
+                spec.username,
+                spec.password,
                 spec.dbname
             )
             , NoTls)
@@ -54,6 +55,7 @@ impl DataStore {
     }
 }
 
+/// The blockstats table columns we track.
 pub struct BlockStats {
     pub height: u64,
     pub blockhash: String,
@@ -136,30 +138,30 @@ impl BlockStats {
                 , subsidy
                 , swtotal_size
                 , swtotal_weight
-                
+
                 , swtxs
                 , time
                 , total_out
                 , total_size
                 , total_weight
-                
+
                 , totalfee
                 , txs
                 , utxo_increase
                 , utxo_size_inc
                 , maxfee
-                
+
                 , maxfeerate
                 , maxtxsize
                 , medianfee
                 , mediantime
                 , mediantxsize
-                
+
                 , minfee
                 , minfeerate
                 , mintxsize
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
                 $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
             )",
             &[
@@ -168,31 +170,31 @@ impl BlockStats {
                 , &(self.avgfee as i64)
                 , &(self.avgfeerate as i64)
                 , &(self.avgtxsize as i64)
-                
+
                 , &(self.ins as i64)
                 , &(self.outs as i64)
                 , &(self.subsidy as f64)
                 , &(self.swtotal_size as i64)
                 , &(self.swtotal_weight as i64)
-                
+
                 , &(self.swtxs as i64)
                 , &(self.time as i64)
                 , &(self.total_out as i64)
                 , &(self.total_size as i64)
                 , &(self.total_weight as i64)
-                
+
                 , &(self.totalfee as f64)
                 , &(self.txs as i64)
                 , &(self.utxo_increase as i64)
                 , &(self.utxo_size_inc as i64)
                 , &(self.maxfee as i64)
-                
+
                 , &(self.maxfeerate as i64)
                 , &(self.maxtxsize as i64)
                 , &(self.medianfee as i64)
                 , &(self.mediantime as i64)
                 , &(self.mediantxsize as i64)
-                
+
                 , &(self.minfee as i64)
                 , &(self.minfeerate as i64)
                 , &(self.mintxsize as i64)
