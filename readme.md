@@ -63,6 +63,8 @@ local blockchain.
 
 ## How fast is this bridge?
 
+### Loading the `blockstats` table
+
 TL;DR: the `blockstats` table updates at a rate of about 50 blocks per second on this hardware.
 
 Let's try an test and see.  Let's add 1,000 blocks to the `blockstats` table.
@@ -89,6 +91,58 @@ sys     0m0.361s
 ```
 
 Which is about 50 blocks per second.
+
+### Querying the `blockstats` table
+
+How many records do we have?  Presently the `blockstats` table has no indexes.
+
+```swl
+> select max(height) from blockstats;
+```
+```
++--------+
+| max    |
+|--------|
+| 844184 |
++--------+
+SELECT 1
+Time: 0.126s
+```
+
+How many blocks have been mined for each calendar year?
+
+```sql
+> select extract(year from to_timestamp(time)) as year,
+ count(*)
+ from blockstats
+ group by 1
+ order by 1 desc
+ ```
+```
++------+-------+
+| year | count |
+|------+-------|
+| 2024 | 20363 |
+| 2023 | 53999 |
+| 2022 | 53188 |
+| 2021 | 52690 |
+| 2020 | 53227 |
+| 2019 | 54232 |
+| 2018 | 54491 |
+| 2017 | 55931 |
+| 2016 | 54854 |
+| 2015 | 54308 |
+| 2014 | 58862 |
+| 2013 | 63439 |
+| 2012 | 54540 |
+| 2011 | 59615 |
+| 2010 | 67928 |
+| 2009 | 32518 |
++------+-------+
+SELECT 16
+Time: 0.628s
+```
+So this aggregate query over the whole `blockstats` table happens in subsecond time.
 
 ### See 
 * [Bitcoin Core RPC documentation](https://developer.bitcoin.org/reference/rpc/index.html)
