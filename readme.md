@@ -61,7 +61,35 @@ local blockchain.
         store height: 844003
         store is 3 blocks behind the local blockchain 
 
+## How fast is this bridge?
 
-See 
+TL;DR: the `blockstats` table updates at a rate of about 50 blocks per second on this hardware.
+
+Let's try an test and see.  Let's add 1,000 blocks to the `blockstats` table.
+
+**Hardware:**
+
+OS: Fedora Linux 40  
+Host: ThinkPad X1 Carbon Gen 11
+CPU: 13th Gen Intel i7-1370P @ 5.20 GHz
+Memory: 32 GiB
+
+```
+$ btcdb
+blockchain height: 844175
+store height: 843173
+store is 1002 blocks behind the local blockchain
+
+
+$ time btcdb -u
+
+real    0m22.798s
+user    0m0.308s
+sys     0m0.361s
+```
+
+Which is about 50 blocks per second.
+
+### See 
 * [Bitcoin Core RPC documentation](https://developer.bitcoin.org/reference/rpc/index.html)
 * [Storing and Querying Bitcoin Blockchain Using SQL Databases](https://files.eric.ed.gov/fulltext/EJ1219543.pdf)
