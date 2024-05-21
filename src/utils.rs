@@ -15,13 +15,13 @@ pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
 
 /// returns the block height of the blockchain
 pub async fn get_blockchain_height(moderef: &Mode) -> Result<u64, Box<dyn std::error::Error>> {
-    let rpc: &bitcoincore_rpc::Client = &moderef.rpc.rpc;
+    let rpc: &Client = &moderef.rpc.rpc;
     Ok(rpc.get_block_count().unwrap())
 }
 
 /// a demo utility function to get the block fees for the last `numblocks` blocks
 pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
-    let rpc: &bitcoincore_rpc::Client = &moderef.rpc.rpc;
+    let rpc: &Client = &moderef.rpc.rpc;
     let mut fees: Vec<u64> = Vec::new();
     let current_height = rpc.get_block_count().unwrap();
 
@@ -80,7 +80,7 @@ pub async fn raise_blockstats_table(moderef: &Mode, numblocks: u64) -> Result<()
     Ok(())
 }
 
-async fn connect_to_bitcoin_core() -> Result<bitcoincore_rpc::Client, bitcoincore_rpc::Error> {
+async fn connect_to_bitcoin_core() -> Result<Client, bitcoincore_rpc::Error> {
     Client::new(
         "http://localhost:8332", 
         Auth::UserPass(
@@ -109,13 +109,11 @@ async fn connect_to_database() -> Result<tokio_postgres::Client, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::modes;
-
     use super::*;
 
     #[tokio::test]
     async fn test_get_store_height() {
-        let mode = modes::Mode::new().await;
+        let mode = Mode::new().await;
         let height = get_store_height(&mode).await.unwrap();
         assert!(height > 0);
     }
@@ -174,7 +172,7 @@ mod tests {
             println!("{:?}", block)
         }
     
-        // fetch an out of bounds block
+        // fetch an out-of-bounds block
         #[tokio::test]
         async fn test_get_block_stats_out_of_bounds() {
             let rpc = connect_to_bitcoin_core().await;
