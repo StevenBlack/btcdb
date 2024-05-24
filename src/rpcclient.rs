@@ -2,7 +2,7 @@
 // use bitcoin::io::Error;
 use bitcoincore_rpc::{Auth, Client};
 
-// #[derive(Debug)]
+use crate::config::{get_rpcconfig, RPCConfig};
 
 #[derive(Debug)]
 pub (crate) struct RpcClient {
@@ -11,12 +11,13 @@ pub (crate) struct RpcClient {
 
 impl RpcClient {
     pub async fn new() -> Self {
+        let config: RPCConfig = get_rpcconfig().extract().unwrap();
         RpcClient {
             rpc: Client::new(
-            "http://localhost:8332", 
+            config.url.as_str(), 
             Auth::UserPass(
-                "YOURUSERNAME".to_string(), 
-                "YOURPASSWORD".to_string()
+                config.username, 
+                config.password,
             )
             ).unwrap(),
         }

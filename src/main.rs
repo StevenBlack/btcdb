@@ -1,7 +1,7 @@
 // Copyright 2024 Steven Black <s@sbc.io>,
 //
 // Licensed under the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>.
+// http://opensource.org/licenses/MIT
 // This file may not be copied, modified, or distributed
 // except according to those terms.
 //
@@ -10,8 +10,9 @@ use tokio_postgres::Error;
 
 use utils::*;
 
-mod modes;
+mod config;
 mod datastore;
+mod modes;
 mod rpcclient;
 mod utils;
 

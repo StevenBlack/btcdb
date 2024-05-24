@@ -2,27 +2,7 @@
 use tokio_postgres::{Error, NoTls};
 use bitcoincore_rpc::json::GetBlockStatsResult;
 
-/// The fields required to address the local SQL data store.
-#[derive(Debug)]
-pub struct DataStoreSpec {
-    pub(crate) host: String,
-    pub(crate) dbname: String,
-    pub(crate) schema: String,
-    pub(crate) username: String,
-    pub(crate) password: String,
-}
-
-impl Default for DataStoreSpec {
-    fn default() -> Self {
-        DataStoreSpec {
-            dbname: "bitcoin".to_string(),
-            schema: "public".to_string(),
-            host: "localhost".to_string(),
-            username: "rpc".to_string(),
-            password: "YOURPASSWORD".to_string(),
-        }
-    }
-}
+use crate::config::SQLConfig;
 
 #[derive(Debug)]
 pub struct DataStore {
@@ -30,7 +10,7 @@ pub struct DataStore {
 }
 
 impl DataStore {
-    pub async fn new(spec: DataStoreSpec) -> Self {
+    pub async fn new(spec: SQLConfig) -> Self {
         let (client, connection) = tokio_postgres::connect(
             &format!(
                 "host={} user={} password={} dbname={}",

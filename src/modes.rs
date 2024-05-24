@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 
-use crate::datastore::{DataStore, DataStoreSpec};
+use crate::config::get_sqlconfig;
+use crate::datastore::DataStore;
 use crate::rpcclient::RpcClient;
 
 #[derive(Debug)]
@@ -12,7 +13,8 @@ pub struct Mode {
 
 impl Mode {
     pub async fn new() -> Self {
-        let db_client = DataStore::new(DataStoreSpec::default()).await;
+        let sqlconfig = get_sqlconfig().extract().unwrap();
+        let db_client = DataStore::new(sqlconfig).await;
         Mode {
             rpc: RpcClient::default(),
             store: db_client,
