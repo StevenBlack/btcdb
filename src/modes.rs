@@ -13,7 +13,7 @@ pub struct Mode {
 
 impl Mode {
     pub async fn new() -> Self {
-        let sqlconfig = get_sqlconfig().extract().unwrap();
+        let sqlconfig = get_sqlconfig();
         let db_client = DataStore::new(sqlconfig).await;
         Mode {
             rpc: RpcClient::default(),

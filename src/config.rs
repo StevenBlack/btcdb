@@ -1,15 +1,68 @@
+use figment::{
+    Figment, 
+    Provider, 
+    Error, 
+    Metadata, 
+    Profile,
+    providers::{Format, Toml},
+    value::{Map, Dict}
+};
 use serde::{Serialize, Deserialize};
-use figment::{Figment, providers::{Env, Format, Toml, Serialized}};
+use std::path::PathBuf;
+extern crate dirs;
 
-/// The fields required to address the local SQL data store.
+/// Public functions
 
+/// Returns a config file Path 
+pub fn get_config_file() -> PathBuf {
+    let config_dir = dirs::config_local_dir().unwrap();
+    let config_file = config_dir.join("config.toml");
+    config_file
+}
+
+/// Returns the complete configuration Figment
+pub fn get_config() -> Config {
+    Config::default()   
+}
+
+/// Returns the sql configuration Figment
+pub fn get_sqlconfig() -> SQLConfig {
+    get_config().sql.extract().unwrap()
+}
+
+/// Returns the Bitcoin RCP server configuration Figment
+pub fn get_rpcconfig() -> Figment {
+    get_config().rpc
+
+}
+
+/// structs
+/// 
+#[derive(Debug)]
+pub struct Config {
+    pub sql: Figment,
+    pub rpc: Figment,
+}
+
+// merge(SQLConfig::default()).
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            sql: Figment::from(SQLConfig::default()).merge(get_sqlconfig()),
+            rpc: Figment::from(RPCConfig::default()).merge(get_rpcconfig()),
+        }
+    }
+}
+
+/// Configuration items for the local SQL data store.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SQLConfig {
-    pub(crate) host: String,
-    pub(crate) dbname: String,
-    pub(crate) schema: String,
-    pub(crate) username: String,
-    pub(crate) password: String,
+    pub host: String,
+    pub dbname: String,
+    pub schema: String,
+    pub username: String,
+    pub password: String,
 }
 
 impl Default for SQLConfig {
@@ -24,12 +77,22 @@ impl Default for SQLConfig {
     }
 }
 
-pub fn get_sqlconfig() -> Figment {
-    Figment::from(Serialized::defaults(SQLConfig::default()))
-    .merge(Toml::file("App.toml"))
-    .merge(Env::prefixed("APP_"))
+impl Provider for SQLConfig {
+    fn metadata(&self) -> Metadata {
+        Metadata::named("btcdb SQL Config")
+    }
+
+    fn data(&self) -> Result<Map<Profile, Dict>, Error>  {
+        figment::providers::Serialized::defaults(SQLConfig::default()).data()
+    }
+
+    fn profile(&self) -> Option<Profile> {
+        // Optionally, a profile that's selected by default.
+        Some("sql".into())
+    }
 }
 
+/// Configuration items for Bitcoin RPC.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RPCConfig {
     pub(crate) url: String,
@@ -47,8 +110,32 @@ impl Default for RPCConfig {
     }
 }
 
-pub fn get_rpcconfig() -> Figment {
-    Figment::from(Serialized::defaults(RPCConfig::default()))
-    .merge(Toml::file("App.toml"))
-    .merge(Env::prefixed("APP_"))
+impl Provider for RPCConfig {
+    fn metadata(&self) -> Metadata {
+        Metadata::named("btcdb RPC Config")
+    }
+
+    fn data(&self) -> Result<Map<Profile, Dict>, Error>  {
+        figment::providers::Serialized::defaults(RPCConfig::default()).data()
+    }
+
+    fn profile(&self) -> Option<Profile> {
+        // Optionally, a profile that's selected by default.
+        Some("rpc".into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config() {
+        // let config = get_config();
+        // println!("{:?}", config);
+        // let sqlconfig = get_sqlconfig();
+        // println!("{:?}", sqlconfig);
+        let rpcconfig = get_rpcconfig();
+        println!("{:?}", rpcconfig);
+    }
 }
