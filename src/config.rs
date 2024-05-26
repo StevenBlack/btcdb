@@ -16,7 +16,7 @@ extern crate dirs;
 /// Returns a config file Path 
 pub fn get_config_file() -> PathBuf {
     let config_dir = dirs::config_local_dir().unwrap();
-    let config_file = config_dir.join("config.toml");
+    let config_file = config_dir.join("btcdb").join("config.toml");
     config_file
 }
 
@@ -27,30 +27,32 @@ pub fn get_config() -> Config {
 
 /// Returns the sql configuration Figment
 pub fn get_sqlconfig() -> SQLConfig {
-    get_config().sql.extract().unwrap()
+    Figment::from(SQLConfig::default())
+    .merge(Toml::file(get_config_file()))
+    .extract().unwrap()
 }
 
 /// Returns the Bitcoin RCP server configuration Figment
-pub fn get_rpcconfig() -> Figment {
-    get_config().rpc
-
+pub fn get_rpcconfig() -> RPCConfig {
+    Figment::from(RPCConfig::default())
+    .merge(Toml::file(get_config_file()))
+    .extract().unwrap()
 }
 
 /// structs
 /// 
 #[derive(Debug)]
 pub struct Config {
-    pub sql: Figment,
-    pub rpc: Figment,
+    pub sql: SQLConfig,
+    pub rpc: RPCConfig,
 }
-
-// merge(SQLConfig::default()).
 
 impl Default for Config {
     fn default() -> Self {
         Config {
-            sql: Figment::from(SQLConfig::default()).merge(get_sqlconfig()),
-            rpc: Figment::from(RPCConfig::default()).merge(get_rpcconfig()),
+            sql: get_sqlconfig(),
+            rpc: get_rpcconfig(),
+
         }
     }
 }
@@ -95,9 +97,9 @@ impl Provider for SQLConfig {
 /// Configuration items for Bitcoin RPC.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RPCConfig {
-    pub(crate) url: String,
-    pub(crate) username: String,
-    pub(crate) password: String,
+    pub url: String,
+    pub username: String,
+    pub password: String,
 }
 
 impl Default for RPCConfig {
@@ -130,12 +132,26 @@ mod tests {
     use super::*;
 
     #[test]
+    fn scratch() {
+        let x: Figment = Figment::from(SQLConfig::default()).merge(get_sqlconfig());
+        println!("scratch: {:?}", x);
+        let y: SQLConfig = x.extract().unwrap();
+        println!("scratch2: {:?}", y);
+    }
+
+    #[test]
     fn test_config() {
-        // let config = get_config();
-        // println!("{:?}", config);
-        // let sqlconfig = get_sqlconfig();
-        // println!("{:?}", sqlconfig);
-        let rpcconfig = get_rpcconfig();
-        println!("{:?}", rpcconfig);
+        let config = get_config();
+        assert_eq!(config.sql.host, "localhost");
+        assert_eq!(config.rpc.url, "http://localhost:8332");
+    }
+
+    #[test]
+    fn test_config_file() {
+        let config_file = get_config_file();
+        println!("{:?}", config_file);
+        assert!(config_file.ends_with("config.toml"));
+        assert!(config_file.exists());
+        assert!(config_file.is_file());
     }
 }

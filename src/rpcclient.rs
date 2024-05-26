@@ -11,7 +11,7 @@ pub (crate) struct RpcClient {
 
 impl RpcClient {
     pub async fn new() -> Self {
-        let config: RPCConfig = get_rpcconfig().extract().unwrap();
+        let config: RPCConfig = get_rpcconfig();
         RpcClient {
             rpc: Client::new(
             config.url.as_str(), 
