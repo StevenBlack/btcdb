@@ -9,6 +9,7 @@ use figment::{
 };
 use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
+use core::fmt::Display;
 extern crate dirs;
 
 /// Public functions
@@ -94,6 +95,13 @@ impl Provider for SQLConfig {
     }
 }
 
+impl Display for SQLConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        println!("SQL Configuration:");
+        write!(f, "  host: {}\n  dbname: {}\n  schema: {}\n  username: {}\n  password: {}", self.host, self.dbname, self.schema, self.username, self.password)
+    }
+}
+
 /// Configuration items for Bitcoin RPC.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RPCConfig {
@@ -127,6 +135,13 @@ impl Provider for RPCConfig {
     }
 }
 
+impl Display for RPCConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        println!("RPC Configuration:");
+        write!(f, "  url: {}\n  username: {}\n  password: {}", self.url, self.username, self.password)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -142,6 +157,7 @@ mod tests {
     #[test]
     fn test_config() {
         let config = get_config();
+        println!("{:?}", config);
         assert_eq!(config.sql.host, "localhost");
         assert_eq!(config.rpc.url, "http://localhost:8332");
     }

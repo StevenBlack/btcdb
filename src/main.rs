@@ -20,6 +20,11 @@ mod utils;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
+
+    /// display configuration information.
+    #[clap(short, long)]
+    config: bool,
+
     /// raise the datastore height by an arbitrary nummber of blocks.
     #[clap(short, long)]
     raise: Option<u64>,
@@ -45,6 +50,11 @@ async fn main()  -> Result<(), Error> {
 
     // our mode of operation
     let mode = modes::Mode::new().await;
+
+    if cli.config {
+        config();
+        return Ok(());
+    }
 
     if cli.status {
         status().await;
@@ -83,5 +93,22 @@ async fn status() {
     }
     println!("store and the local blockchain have equal height");
 }
-
+/// Display configuration information.
+/// * Location of the configuration file
+/// * SQL configuration
+/// * RPC configuration
+fn config() {
+    println!();
+    println!("================================");
+    println!("btcdb Configuration information:");
+    println!("================================");
+    println!();
+    println!("btcdb configuration file lication:");
+    println!("  {:?}", config::get_config_file());
+    println!();
+    println!("{}", config::get_sqlconfig());
+    println!();
+    println!("{}", config::get_rpcconfig());
+    println!();
+}
 
