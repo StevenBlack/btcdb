@@ -1,22 +1,20 @@
 #![allow(dead_code)]
 
-
 use crate::config::get_sqlconfig;
 use crate::datastore::DataStore;
 use crate::rpcclient::RpcClient;
 
 #[derive(Debug)]
 pub struct Mode {
-    pub (crate) rpc: RpcClient,
-    pub (crate) store: DataStore,
+    pub rpc: RpcClient,
+    pub store: DataStore,
 }
 
 impl Mode {
     pub async fn new() -> Self {
-        let sqlconfig = get_sqlconfig();
-        let db_client = DataStore::new(sqlconfig).await;
+        let db_client = DataStore::new(get_sqlconfig()).await;
         Mode {
-            rpc: RpcClient::default(),
+            rpc: RpcClient::new().await,
             store: db_client,
         }
     }
@@ -24,6 +22,7 @@ impl Mode {
     pub fn getrpc(self) -> bitcoincore_rpc::Client {
         self.rpc.rpc
     }
+
     pub fn getstoreclient(self) -> tokio_postgres::Client {
         self.store.client
     }
@@ -41,15 +40,3 @@ mod tests {
         assert!(mode.store.client.query("SELECT 1", &[]).await.is_ok());
     }
 }
-
-// let conf1 = MyConfiguration {
-//     check: true,
-//     ..Default::default()
-// };
-
-
-
-// does database exist?
-//   select exists (select * from pg_database where datname = 'the_name');
-// does table exist?
-//  select exists (select * from information_schema.tables where table_name = 'the_name');

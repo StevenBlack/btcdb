@@ -26,18 +26,14 @@ pub fn get_config() -> Config {
     Config::default()   
 }
 
-/// Returns the sql configuration Figment
+/// Returns the sql configuration
 pub fn get_sqlconfig() -> SQLConfig {
-    Figment::from(SQLConfig::default())
-    .merge(Toml::file(get_config_file()))
-    .extract().unwrap()
+    SQLConfig::figment().extract().unwrap()
 }
 
 /// Returns the Bitcoin RCP server configuration Figment
 pub fn get_rpcconfig() -> RPCConfig {
-    Figment::from(RPCConfig::default())
-    .merge(Toml::file(get_config_file()))
-    .extract().unwrap()
+    RPCConfig::figment().extract().unwrap()
 }
 
 /// structs
@@ -53,7 +49,6 @@ impl Default for Config {
         Config {
             sql: get_sqlconfig(),
             rpc: get_rpcconfig(),
-
         }
     }
 }
@@ -80,13 +75,23 @@ impl Default for SQLConfig {
     }
 }
 
+impl SQLConfig {
+    pub fn figment() -> Figment {
+        let defaultfig = Figment::from(SQLConfig::default());
+        let filefig = Figment::from(Toml::file(get_config_file()))
+                .focus("sql");
+        defaultfig.merge(filefig)
+    }
+}
+
 impl Provider for SQLConfig {
     fn metadata(&self) -> Metadata {
         Metadata::named("btcdb SQL Config")
     }
 
     fn data(&self) -> Result<Map<Profile, Dict>, Error>  {
-        figment::providers::Serialized::defaults(SQLConfig::default()).data()
+        figment::providers::Serialized::defaults(SQLConfig::default())
+        .data()
     }
 
     fn profile(&self) -> Option<Profile> {
@@ -120,13 +125,23 @@ impl Default for RPCConfig {
     }
 }
 
+impl RPCConfig {
+    pub fn figment() -> Figment {
+        let defaultfig = Figment::from(RPCConfig::default());  
+        let filefig = Figment::from(Toml::file(get_config_file()))
+            .focus("rpc");
+        defaultfig.merge(filefig)
+    }
+}
+
 impl Provider for RPCConfig {
     fn metadata(&self) -> Metadata {
         Metadata::named("btcdb RPC Config")
     }
 
     fn data(&self) -> Result<Map<Profile, Dict>, Error>  {
-        figment::providers::Serialized::defaults(RPCConfig::default()).data()
+        figment::providers::Serialized::defaults(RPCConfig::default())
+        .data()
     }
 
     fn profile(&self) -> Option<Profile> {
@@ -145,14 +160,6 @@ impl Display for RPCConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn scratch() {
-        let x: Figment = Figment::from(SQLConfig::default()).merge(get_sqlconfig());
-        println!("scratch: {:?}", x);
-        let y: SQLConfig = x.extract().unwrap();
-        println!("scratch2: {:?}", y);
-    }
 
     #[test]
     fn test_config() {

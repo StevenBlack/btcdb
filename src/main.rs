@@ -93,6 +93,7 @@ async fn status() {
     }
     println!("store and the local blockchain have equal height");
 }
+
 /// Display configuration information.
 /// * Location of the configuration file
 /// * SQL configuration
