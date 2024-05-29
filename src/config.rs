@@ -177,4 +177,32 @@ mod tests {
         assert!(config_file.exists());
         assert!(config_file.is_file());
     }
+
+    #[test]
+    fn test_sqlconfig_default() {
+        let sql_config = SQLConfig::default();
+        assert_eq!(sql_config.host, "localhost");
+        assert_eq!(sql_config.dbname, "bitcoin");
+        assert_eq!(sql_config.schema, "public");
+        assert_eq!(sql_config.username, "rpc");
+        assert_eq!(sql_config.password, "YOURPASSWORD");
+    }
+
+    #[test]
+    fn test_rpcconfig_default() {
+        let rpc_config = RPCConfig::default();
+        assert_eq!(rpc_config.url, "http://localhost:8332");
+        assert_eq!(rpc_config.username, "YOURUSERNAME");
+        assert_eq!(rpc_config.password, "YOURPASSWORD");
+    }
+
+    #[test]
+    fn test_sqlconfig_figment() {
+        let sql_config: SQLConfig = SQLConfig::figment().extract().unwrap();
+        assert_eq!(sql_config.host, "localhost");
+        assert_eq!(sql_config.dbname, "bitcoin");
+        assert_eq!(sql_config.schema, "public");
+        assert_eq!(sql_config.username, "rpc");
+        assert_eq!(sql_config.password, "YOURPASSWORD");
+    }
 }

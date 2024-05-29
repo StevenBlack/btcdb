@@ -18,16 +18,17 @@ because I use it all the time, it's awesome, and it's free.
 
 Get help with by using the `-h` or `--help` flag.
 
-        $ btcdb -h
-        Usage: btcdb [OPTIONS]
+```
+Usage: btcdb [OPTIONS]
 
-        Options:
-        -r, --raise <RAISE>  raise the datastore height by an arbitrary nummber of blocks
-        -s, --status         display the status of the datastore and the local blockchain
-        -u, --update         update the local datastore with the latest block stats
-        -v, --verbose        verbose output from commands
-        -h, --help           Print help
-        -V, --version        Print version
+Options:
+  -c, --config         display configuration information
+  -r, --raise <RAISE>  raise the datastore height by an arbitrary nummber of blocks
+  -s, --status         display the status of the datastore and the local blockchain
+  -u, --update         update the local datastore level with the local Bitcoin blockchain
+  -h, --help           Print help
+  -V, --version        Print version
+```
 
 Presently this repo offers:
 

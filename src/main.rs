@@ -33,7 +33,7 @@ struct Cli {
     #[clap(short, long)]
     status: bool,
 
-    /// update the local datastore with the latest block stats.
+    /// update the local datastore level with the local Bitcoin blockchain.
     #[clap(short, long)]
     update: bool,
 
