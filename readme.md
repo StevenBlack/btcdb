@@ -10,13 +10,14 @@ very limited querying capability. [Bitcoin Core](https://bitcoin.org/en/bitcoin-
 the local blockchain, and provides an [extensive API named BitcoinRPC](https://developer.bitcoin.org/reference/rpc/), 
 but offers no way to query and aggregate the blockchain directly.
 
-
 I really want a way to explore the Bitcoin blockchain as a SQL database. PostgreSQL is used here 
 because I use it all the time, it's awesome, and it's free.
 
 ## Current Capabilities
 
 Get help with by using the `-h` or `--help` flag.
+
+**Take note**: You'll need a copy of Bitcoin Core running and addressable.
 
 ```
 Usage: btcdb [OPTIONS]
