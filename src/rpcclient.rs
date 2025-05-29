@@ -14,12 +14,12 @@ impl RpcClient {
         let config: RPCConfig = get_rpcconfig();
         RpcClient {
             rpc: Client::new(
-            config.url.as_str(), 
+            config.url.as_str(),
             Auth::UserPass(
-                config.username, 
+                config.username,
                 config.password,
             )
-            ).unwrap(),
+            ).expect("\nFailed to create Bitcoin RPC client connection\nPlease check your RPC configuration in the config.toml file.\n\n"),
         }
     }
 }
@@ -28,9 +28,9 @@ impl Default for RpcClient {
     fn default() -> Self {
         RpcClient {
             rpc: Client::new(
-            "http://localhost:8332", 
+            "http://localhost:8332",
             Auth::UserPass(
-                "YOURUSERNAME".to_string(), 
+                "YOURUSERNAME".to_string(),
                 "YOURPASSWORD".to_string()
             )
             ).unwrap(),

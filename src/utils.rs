@@ -16,7 +16,7 @@ pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
 /// returns the block height of the blockchain
 pub async fn get_blockchain_height(moderef: &Mode) -> Result<u64, Box<dyn std::error::Error>> {
     let rpc: &Client = &moderef.rpc.rpc;
-    Ok(rpc.get_block_count().unwrap())
+    Ok(rpc.get_block_count().expect("\nError getting block count\nIs the Bitcoin Core running?\n\n"))
 }
 
 /// a demo utility function to get the block fees for the last `numblocks` blocks
@@ -59,7 +59,7 @@ pub async fn update_blockstats_table(moderef: &Mode) -> Result<(), Error> {
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
         // println!("Inserted block {}", i);
-    }    
+    }
     Ok(())
 }
 
@@ -76,15 +76,15 @@ pub async fn raise_blockstats_table(moderef: &Mode, numblocks: u64) -> Result<()
         let block_stats = BlockStats::from_rpc(block);
         block_stats.insert(&client).await.unwrap();
         // println!("Inserted block {}", i);
-    }    
+    }
     Ok(())
 }
 
 async fn connect_to_bitcoin_core() -> Result<Client, bitcoincore_rpc::Error> {
     Client::new(
-        "http://localhost:8332", 
+        "http://localhost:8332",
         Auth::UserPass(
-            "YOURUSERNAME".to_string(), 
+            "YOURUSERNAME".to_string(),
             "YOURPASSWORD".to_string()
         )
     )
@@ -144,23 +144,23 @@ mod tests {
     }
 
     #[cfg(test)]
-    mod tests {    
+    mod tests {
         use super::*;
-    
+
         // test connecting to the bitcoin core
         #[tokio::test]
         async fn test_connect_to_btc_core() {
             let rpc = connect_to_bitcoin_core().await;
             assert!(rpc.is_ok());
         }
-    
+
         // test connecting to the database
         #[tokio::test]
         async fn test_connect_to_database() {
             let db = connect_to_database().await;
             assert!(db.is_ok());
         }
-    
+
         // fetch a block.
         #[tokio::test]
         async fn test_get_block_stats() {
@@ -171,7 +171,7 @@ mod tests {
             assert_eq!(block.height, 842209);
             println!("{:?}", block)
         }
-    
+
         // fetch an out-of-bounds block
         #[tokio::test]
         async fn test_get_block_stats_out_of_bounds() {
@@ -183,4 +183,4 @@ mod tests {
         }
         }
     }
-    
+
