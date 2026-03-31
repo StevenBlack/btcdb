@@ -52,12 +52,12 @@ pub async fn update_blockstats_table(moderef: &Mode) -> Result<(), Error> {
     let rpc = &moderef.rpc.rpc;
     let client = &moderef.store.client;
     let current_height = rpc.get_block_count().unwrap();
-    let store_height = get_store_height(&moderef).await.unwrap();
+    let store_height = get_store_height(moderef).await.unwrap();
     for i in (store_height + 1)..=current_height {
 
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
-        block_stats.insert(&client).await.unwrap();
+        block_stats.insert(client).await.unwrap();
         // println!("Inserted block {}", i);
     }
     Ok(())
@@ -69,12 +69,12 @@ pub async fn raise_blockstats_table(moderef: &Mode, numblocks: u64) -> Result<()
     let rpc = &moderef.rpc.rpc;
     let client = &moderef.store.client;
     let current_height = rpc.get_block_count().unwrap();
-    let store_height = get_store_height(&moderef).await.unwrap();
+    let store_height = get_store_height(moderef).await.unwrap();
     let increment = min(numblocks, current_height - store_height);
     for i in (store_height + 1)..= (store_height + increment) {
         let block  = rpc.get_block_stats(i).unwrap();
         let block_stats = BlockStats::from_rpc(block);
-        block_stats.insert(&client).await.unwrap();
+        block_stats.insert(client).await.unwrap();
         // println!("Inserted block {}", i);
     }
     Ok(())

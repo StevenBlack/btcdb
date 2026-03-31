@@ -1,8 +1,8 @@
 use figment::{
-    Figment, 
-    Provider, 
-    Error, 
-    Metadata, 
+    Figment,
+    Provider,
+    Error,
+    Metadata,
     Profile,
     providers::{Format, Toml},
     value::{Map, Dict}
@@ -14,7 +14,7 @@ extern crate dirs;
 
 /// Public functions
 
-/// Returns a config file Path 
+/// Returns a config file Path
 pub fn get_config_file() -> PathBuf {
     let config_dir = dirs::config_local_dir().unwrap();
     let config_file = config_dir.join("btcdb").join("config.toml");
@@ -23,7 +23,7 @@ pub fn get_config_file() -> PathBuf {
 
 /// Returns the complete configuration Figment
 pub fn get_config() -> Config {
-    Config::default()   
+    Config::default()
 }
 
 /// Returns the sql configuration
@@ -37,7 +37,7 @@ pub fn get_rpcconfig() -> RPCConfig {
 }
 
 /// structs
-/// 
+///
 #[derive(Debug)]
 pub struct Config {
     pub sql: SQLConfig,
@@ -118,8 +118,8 @@ pub struct RPCConfig {
 impl Default for RPCConfig {
     fn default() -> Self {
         RPCConfig {
-            url: "http://localhost:8332".to_string(), 
-            username: "YOURUSERNAME".to_string(), 
+            url: "http://localhost:8332".to_string(),
+            username: "YOURUSERNAME".to_string(),
             password: "YOURPASSWORD".to_string(),
         }
     }
@@ -127,7 +127,7 @@ impl Default for RPCConfig {
 
 impl RPCConfig {
     pub fn figment() -> Figment {
-        let defaultfig = Figment::from(RPCConfig::default());  
+        let defaultfig = Figment::from(RPCConfig::default());
         let filefig = Figment::from(Toml::file(get_config_file()))
             .focus("rpc");
         defaultfig.merge(filefig)
