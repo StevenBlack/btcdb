@@ -20,8 +20,7 @@ extern crate dirs;
 /// Returns a config file Path
 pub fn get_config_file() -> PathBuf {
     let config_dir = dirs::config_local_dir().unwrap();
-    let config_file = config_dir.join("btcdb").join("config.toml");
-    config_file
+    config_dir.join("btcdb").join("config.toml")
 }
 
 /// Returns the complete configuration Figment
@@ -114,7 +113,7 @@ impl Provider for SQLConfig {
 /// Display the SQL configuration
 impl Display for SQLConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        println!("SQL Configuration:");
+        writeln!(f, "SQL Configuration:")?;
         write!(f, "  host: {}\n  dbname: {}\n  schema: {}\n  username: {}\n  password: {}", self.host, self.dbname, self.schema, self.username, self.password)
     }
 }
@@ -168,7 +167,7 @@ impl Provider for RPCConfig {
 /// Display the RPC configuration
 impl Display for RPCConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        println!("RPC Configuration:");
+        writeln!(f, "RPC Configuration:")?;
         write!(f, "  url: {}\n  username: {}\n  password: {}", self.url, self.username, self.password)
     }
 }

@@ -46,8 +46,7 @@ pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, 
 pub fn get_block_reward(block_height: u64) -> u64 {
     let initial_reward = 50 * 100_000_000; // 50 BTC in satoshis
     let halvings = block_height / 210_000;
-    let block_reward = initial_reward >> halvings;
-    block_reward
+    initial_reward >> halvings
 }
 
 /// Update the blockstats table in the database, all the way to the current block

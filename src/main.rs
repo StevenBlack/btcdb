@@ -62,8 +62,7 @@ async fn main()  -> Result<(), Error> {
         return Ok(());
     }
 
-    if cli.raise.is_some() {
-        let raise = cli.raise.unwrap();
+    if let Some(raise) = cli.raise {
         raise_blockstats_table(&mode, raise).await.unwrap();
         return Ok(());
     }
