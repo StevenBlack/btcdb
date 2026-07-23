@@ -78,16 +78,16 @@ impl BlockStats {
             height: stats.height,
             ins: stats.ins as u64,
             maxfee: stats.max_fee.to_sat(),
-            maxfeerate: stats.max_fee_rate.to_sat() as u64,
+            maxfeerate: stats.max_fee_rate.to_sat(),
             maxtxsize: stats.max_tx_size as u64,
             medianfee: stats.median_fee.to_sat(),
             mediantime: stats.median_time,
             mediantxsize: stats.median_tx_size as u64,
             minfee: stats.min_fee.to_sat(),
-            minfeerate: stats.min_fee_rate.to_sat() as u64,
+            minfeerate: stats.min_fee_rate.to_sat(),
             mintxsize: stats.min_tx_size as u64,
             outs: stats.outs as u64,
-            subsidy: stats.subsidy.to_btc() as f64,
+            subsidy: stats.subsidy.to_btc(),
             swtotal_size: stats.sw_total_size as u64,
             swtotal_weight: stats.sw_total_weight as u64,
             swtxs: stats.sw_txs as u64,
@@ -95,7 +95,7 @@ impl BlockStats {
             total_out: stats.total_out.to_sat(),
             total_size: stats.total_size as u64,
             total_weight: stats.total_weight as u64,
-            totalfee: stats.total_fee.to_btc() as f64,
+            totalfee: stats.total_fee.to_btc(),
             txs: stats.txs as u64,
             // utxo_increase_actual: stats.utxo_increase_actual,
             utxo_increase: stats.utxo_increase as u64,
@@ -153,7 +153,7 @@ impl BlockStats {
 
                 , &(self.ins as i64)
                 , &(self.outs as i64)
-                , &(self.subsidy as f64)
+                , &(self.subsidy)
                 , &(self.swtotal_size as i64)
                 , &(self.swtotal_weight as i64)
 
@@ -163,7 +163,7 @@ impl BlockStats {
                 , &(self.total_size as i64)
                 , &(self.total_weight as i64)
 
-                , &(self.totalfee as f64)
+                , &(self.totalfee)
                 , &(self.txs as i64)
                 , &(self.utxo_increase as i64)
                 , &(self.utxo_size_inc as i64)
