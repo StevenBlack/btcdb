@@ -1,10 +1,13 @@
 #![allow(dead_code)]
+/// Utility functions
+///
+
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 // use bitcoincore_rpc_json::{GetBlockResult};
 use tokio_postgres::{Error, NoTls};
 use crate::{datastore::BlockStats, modes::Mode};
 
-/// returns the block height of the store
+/// Returns the block height of the store
 pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
     let row = moderef.store.client.query(
         "SELECT max(height) FROM public.blockstats;",
@@ -13,13 +16,13 @@ pub async fn get_store_height(moderef: &Mode) -> Result<u64, Error> {
     Ok(row[0].get::<_, i64>(0).try_into().unwrap())
 }
 
-/// returns the block height of the blockchain
+/// Returns the block height of the blockchain
 pub async fn get_blockchain_height(moderef: &Mode) -> Result<u64, Box<dyn std::error::Error>> {
     let rpc: &Client = &moderef.rpc.rpc;
     Ok(rpc.get_block_count().expect("\nError getting block count\nIs the Bitcoin Core running?\n\n"))
 }
 
-/// a demo utility function to get the block fees for the last `numblocks` blocks
+/// A demo utility function to get the block fees for the last `numblocks` blocks
 pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, Box<dyn std::error::Error>> {
     let rpc: &Client = &moderef.rpc.rpc;
     let mut fees: Vec<u64> = Vec::new();
@@ -39,7 +42,7 @@ pub async fn get_block_fees(moderef: &Mode, numblocks: u64) -> Result<Vec<u64>, 
     Ok(fees)
 }
 
-/// get the block reward for a given block height
+/// Get the block reward for a given block height
 pub fn get_block_reward(block_height: u64) -> u64 {
     let initial_reward = 50 * 100_000_000; // 50 BTC in satoshis
     let halvings = block_height / 210_000;
@@ -47,7 +50,7 @@ pub fn get_block_reward(block_height: u64) -> u64 {
     block_reward
 }
 
-/// update the blockstats table in the database, all the way to the current block
+/// Update the blockstats table in the database, all the way to the current block
 pub async fn update_blockstats_table(moderef: &Mode) -> Result<(), Error> {
     let rpc = &moderef.rpc.rpc;
     let client = &moderef.store.client;
@@ -63,7 +66,7 @@ pub async fn update_blockstats_table(moderef: &Mode) -> Result<(), Error> {
     Ok(())
 }
 
-/// update the blockstats table in the database, all the way to the current block
+/// Update the blockstats table in the database, all the way to the current block
 pub async fn raise_blockstats_table(moderef: &Mode, numblocks: u64) -> Result<(), Error> {
     use std::cmp::min;
     let rpc = &moderef.rpc.rpc;

@@ -1,10 +1,11 @@
-// Copyright 2024 Steven Black <s@sbc.io>,
-//
-// Licensed under the MIT license
-// http://opensource.org/licenses/MIT
-// This file may not be copied, modified, or distributed
-// except according to those terms.
-//
+/// Mapping of Bitcoin block headers to a local PostgreSQL datastore.
+/// Copyright 2024-2026 Steven Black <s@sbc.io>,
+///
+/// Licensed under the MIT license
+/// http://opensource.org/licenses/MIT
+/// This file may not be copied, modified, or distributed
+/// except according to those terms.
+///
 use clap::Parser;
 use tokio_postgres::Error;
 

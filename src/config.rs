@@ -1,3 +1,6 @@
+/// Return the current application configuration to stdout,
+///
+
 use figment::{
     Figment,
     Provider,
@@ -40,7 +43,9 @@ pub fn get_rpcconfig() -> RPCConfig {
 ///
 #[derive(Debug)]
 pub struct Config {
+    /// the SQL configuration
     pub sql: SQLConfig,
+    /// The Bitcoin RPC server configuration
     pub rpc: RPCConfig,
 }
 
@@ -53,13 +58,18 @@ impl Default for Config {
     }
 }
 
-/// Configuration items for the local SQL data store.
+/// Configuration items for the local SQL data store.  All are required.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SQLConfig {
+    /// The hostname of the SQL server
     pub host: String,
+    /// The name of the database
     pub dbname: String,
+    /// The name of the schema
     pub schema: String,
+    /// The user account for the SQL server
     pub username: String,
+    /// The password for the SQL server
     pub password: String,
 }
 
@@ -100,6 +110,7 @@ impl Provider for SQLConfig {
     }
 }
 
+/// Display the SQL configuration
 impl Display for SQLConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         println!("SQL Configuration:");
@@ -110,8 +121,11 @@ impl Display for SQLConfig {
 /// Configuration items for Bitcoin RPC.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RPCConfig {
+    /// The hostname URL of the RPC server
     pub url: String,
+    /// The user account for the RPC server
     pub username: String,
+    /// The password for the RPC server
     pub password: String,
 }
 
@@ -150,6 +164,7 @@ impl Provider for RPCConfig {
     }
 }
 
+/// Display the RPC configuration
 impl Display for RPCConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         println!("RPC Configuration:");
