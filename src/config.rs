@@ -25,6 +25,7 @@ pub fn get_config_file() -> PathBuf {
 }
 
 /// Returns the complete configuration Figment
+#[allow(dead_code)]
 pub fn get_config() -> Config {
     Config::default()
 }
