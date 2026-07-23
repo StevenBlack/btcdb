@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-/// Utility functions
-///
+//! Utility functions
+//!
 
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 // use bitcoincore_rpc_json::{GetBlockResult};

@@ -1,5 +1,5 @@
-/// Return the current application configuration to stdout,
-///
+//! Return the current application configuration to stdout,
+//!
 
 use figment::{
     Figment,
@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use core::fmt::Display;
 extern crate dirs;
 
-/// Public functions
+// Public functions
 
 /// Returns a config file Path
 pub fn get_config_file() -> PathBuf {
