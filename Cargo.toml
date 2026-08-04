@@ -1,5 +1,5 @@
 [package]
-name = "btc-rpt"
+name = "btcdb"
 version = "0.1.2"
 edition = "2021"
 
